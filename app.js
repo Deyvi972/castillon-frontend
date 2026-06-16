@@ -3,7 +3,7 @@
 //  Cambia API_BASE con tu URL de Render
 //  Ejemplo: https://castillon-backend.onrender.com
 // =============================================
-const API_BASE = 'REEMPLAZAR_CON_URL_RENDER';
+const API_BASE = 'https://castillon-backend-ifjc.onrender.com';
 
 const HEADERS = {
   'Content-Type': 'application/json'
