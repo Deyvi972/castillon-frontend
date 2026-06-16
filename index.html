@@ -220,7 +220,7 @@
     // ══════════════════════════════════════════════════
     //  CONFIGURACIÓN — actualiza esta URL con ngrok
     // ══════════════════════════════════════════════════
-    const API_BASE = 'https://pulp-parka-haste.ngrok-free.dev';
+    const API_BASE = 'https://castillon-backend-ifjc.onrender.com';
 
     // ══════════════════════════════════════════════════
     //  USUARIOS FALLBACK (cuando API no está disponible)
@@ -257,7 +257,7 @@
         try {
             const res = await fetch(`${API_BASE}/api/auth/ping`, {
                 signal: AbortSignal.timeout(3000),
-                headers: { 'ngrok-skip-browser-warning': 'true' }
+                headers: {  }
             });
             apiDisponible = res.ok;
         } catch {
@@ -319,7 +319,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': 'true'
+                    
                 },
                 body: JSON.stringify({ logeo, clave }),
                 signal: AbortSignal.timeout(5000)
