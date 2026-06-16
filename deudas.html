@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deudas — Castillon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🍽️</div>
+      <div><div class="brand-name">Castillon</div><div class="brand-sub">Sistema v2</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestión</div>
+      <a href="clientes.html"  class="nav-link"><span class="nav-icon">👥</span> Clientes</a>
+      <a href="empleados.html" class="nav-link"><span class="nav-icon">👤</span> Empleados</a>
+      <a href="productos.html" class="nav-link"><span class="nav-icon">📦</span> Productos</a>
+      <a href="pedidos.html"   class="nav-link"><span class="nav-icon">🍽️</span> Pedidos / Mesas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Ventas</div>
+      <a href="ventas.html"   class="nav-link"><span class="nav-icon">💰</span> Ventas</a>
+      <a href="deudas.html"   class="nav-link"><span class="nav-icon">📋</span> Deudas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a href="usuarios.html" class="nav-link"><span class="nav-icon">🔐</span> Usuarios</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="avatarLetter">U</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Cerrar sesión">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Deudas Generadas</span>
+    </div>
+
+    <div class="page-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📋 Deudas pendientes</span>
+          <span id="totalCount" class="badge badge-blue" style="margin-left:auto">Cargando…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Venta</th><th>Descripción</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tablaDeudas">
+              <tr class="loading-row"><td colspan="5"><span class="spinner"></span> Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const session = requireAuth();
+  if (session) {
+    document.getElementById('userName').textContent = session.nombres || session.logeo;
+    document.getElementById('userRole').textContent = session.tipoUsuario || 'Usuario';
+    document.getElementById('avatarLetter').textContent = (session.nombres || session.logeo || 'U')[0].toUpperCase();
+  }
+  setActiveNav();
+
+  async function cargar() {
+    try {
+      const data = await api('/api/deudas');
+      document.getElementById('totalCount').textContent = `${data.length} deudas`;
+      const tbody = document.getElementById('tablaDeudas');
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Sin deudas pendientes</div></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = data.map(d => `<tr>
+        <td class="td-muted">#${d.idDeudaGenerada}</td>
+        <td class="td-muted">Venta #${d.idVentas}</td>
+        <td>${d.descripcion || '—'}</td>
+        <td><span class="badge ${d.estado === 'A' ? 'badge-red' : 'badge-green'}">${d.estado === 'A' ? 'Pendiente' : 'Pagada'}</span></td>
+        <td>
+          ${d.estado === 'A' ? `<button class="btn btn-primary btn-sm" onclick="marcarPagada(${d.idDeudaGenerada})">✅ Marcar pagada</button>` : '—'}
+        </td>
+      </tr>`).join('');
+    } catch {
+      document.getElementById('tablaDeudas').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">⚠️ No se pudo conectar al servidor</td></tr>`;
+    }
+  }
+
+  async function marcarPagada(id) {
+    try {
+      await api(`/api/deudas/${id}`, 'PUT', { estado: 'P' });
+      toast('Deuda marcada como pagada');
+      cargar();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  }
+
+  cargar();
+</script>
+</body>
+</html>

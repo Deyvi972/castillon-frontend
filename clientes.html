@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes — Castillon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🍽️</div>
+      <div><div class="brand-name">Castillon</div><div class="brand-sub">Sistema v2</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestión</div>
+      <a href="clientes.html"  class="nav-link"><span class="nav-icon">👥</span> Clientes</a>
+      <a href="empleados.html" class="nav-link"><span class="nav-icon">👤</span> Empleados</a>
+      <a href="productos.html" class="nav-link"><span class="nav-icon">📦</span> Productos</a>
+      <a href="pedidos.html"   class="nav-link"><span class="nav-icon">🍽️</span> Pedidos / Mesas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Ventas</div>
+      <a href="ventas.html"   class="nav-link"><span class="nav-icon">💰</span> Ventas</a>
+      <a href="deudas.html"   class="nav-link"><span class="nav-icon">📋</span> Deudas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a href="usuarios.html" class="nav-link"><span class="nav-icon">🔐</span> Usuarios</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="avatarLetter">U</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Cerrar sesión">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Clientes</span>
+      <div class="topbar-right">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="buscar" placeholder="Buscar por nombre o DNI…" oninput="filtrar()">
+        </div>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo cliente</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">👥 Listado de Clientes</span>
+          <span id="totalCount" class="badge badge-blue" style="margin-left:auto">Cargando…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre completo</th>
+                <th>DNI</th>
+                <th>Celular</th>
+                <th>Correo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaClientes">
+              <tr class="loading-row"><td colspan="7"><span class="spinner"></span> Cargando clientes…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO/EDITAR CLIENTE -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Nuevo Cliente</span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fIdCliente">
+      <input type="hidden" id="fIdPersona">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombres *</label>
+          <input type="text" id="fNombres" placeholder="Nombres">
+        </div>
+        <div class="form-group">
+          <label>Apellido Paterno *</label>
+          <input type="text" id="fApePaterno" placeholder="Apellido paterno">
+        </div>
+        <div class="form-group">
+          <label>Apellido Materno</label>
+          <input type="text" id="fApeMaterno" placeholder="Apellido materno">
+        </div>
+        <div class="form-group">
+          <label>DNI *</label>
+          <input type="text" id="fDni" maxlength="8" placeholder="12345678">
+        </div>
+        <div class="form-group">
+          <label>Celular</label>
+          <input type="text" id="fCelular" maxlength="9" placeholder="987654321">
+        </div>
+        <div class="form-group">
+          <label>Correo</label>
+          <input type="email" id="fCorreo" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group full">
+          <label>Dirección</label>
+          <input type="text" id="fDireccion" placeholder="Av. Ejemplo 123, Lima">
+        </div>
+        <div class="form-group">
+          <label>Estado Civil</label>
+          <select id="fEstCivil">
+            <option value="S">Soltero/a</option>
+            <option value="C">Casado/a</option>
+            <option value="V">Viudo/a</option>
+            <option value="D">Divorciado/a</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha de Nacimiento</label>
+          <input type="date" id="fFecNac">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardar" onclick="guardar()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const session = requireAuth();
+  if (session) {
+    document.getElementById('userName').textContent = session.nombres || session.logeo;
+    document.getElementById('userRole').textContent = session.tipoUsuario || 'Usuario';
+    document.getElementById('avatarLetter').textContent = (session.nombres || session.logeo || 'U')[0].toUpperCase();
+  }
+  setActiveNav();
+
+  let todosClientes = [];
+
+  async function cargarClientes() {
+    try {
+      const data = await api('/api/clientes');
+      todosClientes = data;
+      document.getElementById('totalCount').textContent = `${data.length} registros`;
+      renderTabla(data);
+    } catch(e) {
+      document.getElementById('tablaClientes').innerHTML = `
+        <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">
+          ⚠️ No se pudo conectar al servidor. Verifica que ngrok esté activo y actualiza API_BASE en app.js
+        </td></tr>`;
+      document.getElementById('totalCount').textContent = 'Error';
+    }
+  }
+
+  function renderTabla(lista) {
+    const tbody = document.getElementById('tablaClientes');
+    if (lista.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <div class="empty-title">Sin clientes</div>
+        <div class="empty-desc">Agrega el primer cliente con el botón de arriba</div>
+      </div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map(c => {
+      const nombre = [c.nombres, c.apePaterno, c.apeMaterno].filter(Boolean).join(' ');
+      return `<tr>
+        <td class="td-muted">#${c.idCliente}</td>
+        <td><strong>${nombre || '—'}</strong></td>
+        <td class="td-muted">${c.dni || '—'}</td>
+        <td class="td-muted">${c.celular || '—'}</td>
+        <td class="td-muted">${c.correo || '—'}</td>
+        <td><span class="badge ${c.estado === 'A' ? 'badge-green' : 'badge-red'}">${c.estado === 'A' ? 'Activo' : 'Inactivo'}</span></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="editar(${c.idCliente})">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="eliminar(${c.idCliente})">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function filtrar() {
+    const q = document.getElementById('buscar').value.toLowerCase();
+    const filtrado = todosClientes.filter(c => {
+      const nombre = [c.nombres, c.apePaterno, c.apeMaterno].filter(Boolean).join(' ').toLowerCase();
+      return nombre.includes(q) || (c.dni || '').includes(q);
+    });
+    renderTabla(filtrado);
+  }
+
+  function abrirModal(cliente = null) {
+    document.getElementById('fIdCliente').value  = '';
+    document.getElementById('fIdPersona').value  = '';
+    document.getElementById('fNombres').value    = '';
+    document.getElementById('fApePaterno').value = '';
+    document.getElementById('fApeMaterno').value = '';
+    document.getElementById('fDni').value        = '';
+    document.getElementById('fCelular').value    = '';
+    document.getElementById('fCorreo').value     = '';
+    document.getElementById('fDireccion').value  = '';
+    document.getElementById('fFecNac').value     = '';
+
+    if (cliente) {
+      document.getElementById('modalTitle').textContent = 'Editar Cliente';
+      document.getElementById('fIdCliente').value  = cliente.idCliente;
+      document.getElementById('fIdPersona').value  = cliente.idPersona || '';
+      document.getElementById('fNombres').value    = cliente.nombres || '';
+      document.getElementById('fApePaterno').value = cliente.apePaterno || '';
+      document.getElementById('fApeMaterno').value = cliente.apeMaterno || '';
+      document.getElementById('fDni').value        = cliente.dni || '';
+      document.getElementById('fCelular').value    = cliente.celular || '';
+      document.getElementById('fCorreo').value     = cliente.correo || '';
+      document.getElementById('fDireccion').value  = cliente.direccion || '';
+      document.getElementById('fFecNac').value     = cliente.fecNac || '';
+    } else {
+      document.getElementById('modalTitle').textContent = 'Nuevo Cliente';
+    }
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  function editar(id) {
+    const c = todosClientes.find(x => x.idCliente === id);
+    if (c) abrirModal(c);
+  }
+
+  async function guardar() {
+    const nombres = document.getElementById('fNombres').value.trim();
+    const apePaterno = document.getElementById('fApePaterno').value.trim();
+    const dni = document.getElementById('fDni').value.trim();
+    if (!nombres || !apePaterno || !dni) { toast('Nombres, apellido y DNI son obligatorios', 'error'); return; }
+
+    const body = {
+      nombres, apePaterno,
+      apeMaterno: document.getElementById('fApeMaterno').value.trim(),
+      dni,
+      celular:   document.getElementById('fCelular').value.trim(),
+      correo:    document.getElementById('fCorreo').value.trim(),
+      direccion: document.getElementById('fDireccion').value.trim(),
+      fecNac:    document.getElementById('fFecNac').value || null,
+      estCivil:  document.getElementById('fEstCivil').value,
+      estado: 'A'
+    };
+
+    const idCliente = document.getElementById('fIdCliente').value;
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+
+    try {
+      if (idCliente) {
+        await api(`/api/clientes/${idCliente}`, 'PUT', body);
+        toast('Cliente actualizado correctamente');
+      } else {
+        await api('/api/clientes', 'POST', body);
+        toast('Cliente registrado correctamente');
+      }
+      cerrarModal();
+      cargarClientes();
+    } catch(e) {
+      toast('Error al guardar el cliente: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar cliente';
+    }
+  }
+
+  async function eliminar(id) {
+    if (!confirm('¿Eliminar este cliente?')) return;
+    try {
+      await api(`/api/clientes/${id}`, 'DELETE');
+      toast('Cliente eliminado');
+      cargarClientes();
+    } catch(e) {
+      toast('Error al eliminar: ' + e.message, 'error');
+    }
+  }
+
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) cerrarModal();
+  });
+
+  cargarClientes();
+</script>
+</body>
+</html>

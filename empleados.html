@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Empleados — Castillon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🍽️</div>
+      <div><div class="brand-name">Castillon</div><div class="brand-sub">Sistema v2</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestión</div>
+      <a href="clientes.html"  class="nav-link"><span class="nav-icon">👥</span> Clientes</a>
+      <a href="empleados.html" class="nav-link"><span class="nav-icon">👤</span> Empleados</a>
+      <a href="productos.html" class="nav-link"><span class="nav-icon">📦</span> Productos</a>
+      <a href="pedidos.html"   class="nav-link"><span class="nav-icon">🍽️</span> Pedidos / Mesas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Ventas</div>
+      <a href="ventas.html"   class="nav-link"><span class="nav-icon">💰</span> Ventas</a>
+      <a href="deudas.html"   class="nav-link"><span class="nav-icon">📋</span> Deudas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a href="usuarios.html" class="nav-link"><span class="nav-icon">🔐</span> Usuarios</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="avatarLetter">U</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Cerrar sesión">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Empleados</span>
+      <div class="topbar-right">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="buscar" placeholder="Buscar por nombre o DNI…" oninput="filtrar()">
+        </div>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo empleado</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">👤 Listado de Empleados</span>
+          <span id="totalCount" class="badge badge-blue" style="margin-left:auto">Cargando…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre completo</th>
+                <th>DNI</th>
+                <th>Cargo</th>
+                <th>Turno</th>
+                <th>Salario</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaEmpleados">
+              <tr class="loading-row"><td colspan="8"><span class="spinner"></span> Cargando empleados…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Nuevo Empleado</span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fId">
+      <input type="hidden" id="fIdPersona">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombres *</label>
+          <input type="text" id="fNombres" placeholder="Nombres">
+        </div>
+        <div class="form-group">
+          <label>Apellido Paterno *</label>
+          <input type="text" id="fApePaterno">
+        </div>
+        <div class="form-group">
+          <label>Apellido Materno</label>
+          <input type="text" id="fApeMaterno">
+        </div>
+        <div class="form-group">
+          <label>DNI *</label>
+          <input type="text" id="fDni" maxlength="8">
+        </div>
+        <div class="form-group">
+          <label>Celular</label>
+          <input type="text" id="fCelular" maxlength="9">
+        </div>
+        <div class="form-group">
+          <label>Correo</label>
+          <input type="email" id="fCorreo">
+        </div>
+        <div class="form-group">
+          <label>Cargo *</label>
+          <select id="fCargo"><option value="">— seleccionar —</option></select>
+        </div>
+        <div class="form-group">
+          <label>Tipo contrato</label>
+          <select id="fContrato"><option value="">— seleccionar —</option></select>
+        </div>
+        <div class="form-group">
+          <label>Salario (S/)</label>
+          <input type="number" id="fSalario" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Turno</label>
+          <select id="fTurno">
+            <option value="Mañana">Mañana</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noche">Noche</option>
+            <option value="Completo">Tiempo completo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardar" onclick="guardar()">Guardar empleado</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const session = requireAuth();
+  if (session) {
+    document.getElementById('userName').textContent = session.nombres || session.logeo;
+    document.getElementById('userRole').textContent = session.tipoUsuario || 'Usuario';
+    document.getElementById('avatarLetter').textContent = (session.nombres || session.logeo || 'U')[0].toUpperCase();
+  }
+  setActiveNav();
+
+  let todosEmpleados = [];
+  let cargos = [];
+  let contratos = [];
+
+  async function init() {
+    try { cargos = await api('/api/cargos'); cargos.forEach(c => { document.getElementById('fCargo').innerHTML += `<option value="${c.idCargo}">${c.nomCargo}</option>`; }); } catch {}
+    try { contratos = await api('/api/contratos'); contratos.forEach(c => { document.getElementById('fContrato').innerHTML += `<option value="${c.idContrato}">${c.nomContrato}</option>`; }); } catch {}
+
+    try {
+      const data = await api('/api/empleados');
+      todosEmpleados = data;
+      document.getElementById('totalCount').textContent = `${data.length} empleados`;
+      renderTabla(data);
+    } catch {
+      document.getElementById('tablaEmpleados').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">⚠️ No se pudo conectar al servidor</td></tr>`;
+    }
+  }
+
+  function getNomCargo(id) { const c = cargos.find(x => x.idCargo === id); return c ? c.nomCargo : '—'; }
+
+  function renderTabla(lista) {
+    const tbody = document.getElementById('tablaEmpleados');
+    if (!lista.length) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Sin empleados</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map(e => {
+      const nombre = [e.nombres, e.apePaterno, e.apeMaterno].filter(Boolean).join(' ');
+      return `<tr>
+        <td class="td-muted">#${e.idEmpleado}</td>
+        <td><strong>${nombre || '—'}</strong></td>
+        <td class="td-muted">${e.dni || '—'}</td>
+        <td class="td-muted">${e.cargoNombre || getNomCargo(e.idCargo)}</td>
+        <td class="td-muted">${e.turno || '—'}</td>
+        <td>S/ ${(e.salario || 0).toFixed(2)}</td>
+        <td><span class="badge ${e.estado === 'A' ? 'badge-green' : 'badge-red'}">${e.estado === 'A' ? 'Activo' : 'Inactivo'}</span></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="editar(${e.idEmpleado})">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="eliminar(${e.idEmpleado})">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function filtrar() {
+    const q = document.getElementById('buscar').value.toLowerCase();
+    renderTabla(todosEmpleados.filter(e => {
+      const n = [e.nombres, e.apePaterno, e.apeMaterno].filter(Boolean).join(' ').toLowerCase();
+      return n.includes(q) || (e.dni || '').includes(q);
+    }));
+  }
+
+  function abrirModal(emp = null) {
+    ['fId','fIdPersona','fNombres','fApePaterno','fApeMaterno','fDni','fCelular','fCorreo','fSalario'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fTurno').value = 'Mañana';
+    document.getElementById('fCargo').value = '';
+    document.getElementById('fContrato').value = '';
+    if (emp) {
+      document.getElementById('modalTitle').textContent = 'Editar Empleado';
+      document.getElementById('fId').value = emp.idEmpleado;
+      document.getElementById('fIdPersona').value = emp.idPersona || '';
+      document.getElementById('fNombres').value = emp.nombres || '';
+      document.getElementById('fApePaterno').value = emp.apePaterno || '';
+      document.getElementById('fApeMaterno').value = emp.apeMaterno || '';
+      document.getElementById('fDni').value = emp.dni || '';
+      document.getElementById('fCelular').value = emp.celular || '';
+      document.getElementById('fCorreo').value = emp.correo || '';
+      document.getElementById('fCargo').value = emp.idCargo || '';
+      document.getElementById('fContrato').value = emp.idContrato || '';
+      document.getElementById('fSalario').value = emp.salario || '';
+      document.getElementById('fTurno').value = emp.turno || 'Mañana';
+    } else { document.getElementById('modalTitle').textContent = 'Nuevo Empleado'; }
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function cerrarModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+  function editar(id) { const e = todosEmpleados.find(x => x.idEmpleado === id); if(e) abrirModal(e); }
+
+  async function guardar() {
+    const nombres = document.getElementById('fNombres').value.trim();
+    const apePaterno = document.getElementById('fApePaterno').value.trim();
+    const dni = document.getElementById('fDni').value.trim();
+    if (!nombres || !apePaterno || !dni) { toast('Nombres, apellido y DNI son obligatorios', 'error'); return; }
+
+    const body = {
+      nombres, apePaterno,
+      apeMaterno: document.getElementById('fApeMaterno').value.trim(),
+      dni,
+      celular: document.getElementById('fCelular').value.trim(),
+      correo: document.getElementById('fCorreo').value.trim(),
+      idCargo: parseInt(document.getElementById('fCargo').value) || null,
+      idContrato: parseInt(document.getElementById('fContrato').value) || null,
+      salario: parseFloat(document.getElementById('fSalario').value) || null,
+      turno: document.getElementById('fTurno').value,
+      estado: 'A'
+    };
+
+    const id = document.getElementById('fId').value;
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      if (id) { await api(`/api/empleados/${id}`, 'PUT', body); toast('Empleado actualizado'); }
+      else     { await api('/api/empleados', 'POST', body); toast('Empleado registrado'); }
+      cerrarModal(); init();
+    } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Guardar empleado'; }
+  }
+
+  async function eliminar(id) {
+    if (!confirm('¿Eliminar este empleado?')) return;
+    try { await api(`/api/empleados/${id}`, 'DELETE'); toast('Empleado eliminado'); init(); }
+    catch(e) { toast('Error: ' + e.message, 'error'); }
+  }
+
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) cerrarModal();
+  });
+
+  init();
+</script>
+</body>
+</html>

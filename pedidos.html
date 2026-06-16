@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos / Mesas — Castillon</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .mesas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .mesa-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .mesa-card:hover { border-color: var(--accent); background: var(--surface2); }
+    .mesa-card.ocupada { border-color: var(--warning); background: rgba(245,158,11,0.05); }
+    .mesa-card.libre   { border-color: var(--success); }
+    .mesa-num  { font-size: 22px; font-weight: 700; }
+    .mesa-piso { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .mesa-est  { font-size: 10px; font-weight: 600; margin-top: 6px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🍽️</div>
+      <div><div class="brand-name">Castillon</div><div class="brand-sub">Sistema v2</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestión</div>
+      <a href="clientes.html"  class="nav-link"><span class="nav-icon">👥</span> Clientes</a>
+      <a href="empleados.html" class="nav-link"><span class="nav-icon">👤</span> Empleados</a>
+      <a href="productos.html" class="nav-link"><span class="nav-icon">📦</span> Productos</a>
+      <a href="pedidos.html"   class="nav-link"><span class="nav-icon">🍽️</span> Pedidos / Mesas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Ventas</div>
+      <a href="ventas.html"   class="nav-link"><span class="nav-icon">💰</span> Ventas</a>
+      <a href="deudas.html"   class="nav-link"><span class="nav-icon">📋</span> Deudas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a href="usuarios.html" class="nav-link"><span class="nav-icon">🔐</span> Usuarios</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="avatarLetter">U</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Cerrar sesión">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Pedidos / Mesas</span>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="abrirModalMesa()">+ Nueva mesa</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- Mesas -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header">
+          <span class="card-title">🪑 Mesas</span>
+          <span class="badge badge-green" style="margin-left:8px" id="contLibres">— libres</span>
+          <span class="badge badge-yellow" style="margin-left:4px" id="contOcupadas">— ocupadas</span>
+        </div>
+        <div style="padding:16px">
+          <div class="mesas-grid" id="mesasGrid">
+            <div style="text-align:center;padding:32px;color:var(--muted)"><span class="spinner"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pedidos -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📋 Pedidos del día</span>
+          <span id="totalPedidos" class="badge badge-blue" style="margin-left:auto">Cargando…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Mesa</th><th>Piso</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tablaPedidos">
+              <tr class="loading-row"><td colspan="6"><span class="spinner"></span> Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nueva mesa -->
+<div class="modal-overlay" id="modalMesa">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nueva Mesa</span>
+      <button class="modal-close" onclick="cerrarModalMesa()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Número de mesa *</label>
+          <input type="text" id="mNumMesa" maxlength="2" placeholder="01">
+        </div>
+        <div class="form-group">
+          <label>Piso *</label>
+          <input type="text" id="mNumPiso" maxlength="2" placeholder="01">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModalMesa()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarMesa()">Crear mesa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nuevo pedido -->
+<div class="modal-overlay" id="modalPedido">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="pedidoModalTitle">Nuevo Pedido</span>
+      <button class="modal-close" onclick="cerrarModalPedido()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pIdMesa">
+      <p id="pMesaLabel" style="font-size:14px;color:var(--muted);margin-bottom:14px"></p>
+      <div class="form-group">
+        <label>Estado del pedido</label>
+        <select id="pEstado">
+          <option value="A">Activo (en curso)</option>
+          <option value="C">Cerrado</option>
+          <option value="I">Inactivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModalPedido()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPedido()">Crear pedido</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const session = requireAuth();
+  if (session) {
+    document.getElementById('userName').textContent = session.nombres || session.logeo;
+    document.getElementById('userRole').textContent = session.tipoUsuario || 'Usuario';
+    document.getElementById('avatarLetter').textContent = (session.nombres || session.logeo || 'U')[0].toUpperCase();
+  }
+  setActiveNav();
+
+  let mesas = [];
+  let pedidos = [];
+
+  async function init() {
+    try {
+      mesas = await api('/api/mesas');
+      pedidos = (await api('/api/pedidos')) || [];
+      renderMesas();
+      renderPedidos();
+    } catch(e) {
+      document.getElementById('mesasGrid').innerHTML = `<div style="color:var(--muted);padding:16px">⚠️ No se pudo conectar</div>`;
+    }
+  }
+
+  function renderMesas() {
+    const hoy = new Date().toISOString().slice(0,10);
+    const mesasOcupadas = new Set(pedidos.filter(p => p.fecha === hoy && p.estado === 'A').map(p => p.idMesa));
+
+    const libres = mesas.filter(m => !mesasOcupadas.has(m.idMesa)).length;
+    const ocup   = mesas.filter(m =>  mesasOcupadas.has(m.idMesa)).length;
+    document.getElementById('contLibres').textContent   = `${libres} libre${libres !== 1 ? 's' : ''}`;
+    document.getElementById('contOcupadas').textContent = `${ocup} ocupada${ocup !== 1 ? 's' : ''}`;
+
+    if (!mesas.length) {
+      document.getElementById('mesasGrid').innerHTML = `<div class="empty-state"><div class="empty-icon">🪑</div><div class="empty-title">Sin mesas</div><div class="empty-desc">Crea tu primera mesa</div></div>`;
+      return;
+    }
+
+    document.getElementById('mesasGrid').innerHTML = mesas.map(m => {
+      const ocupada = mesasOcupadas.has(m.idMesa);
+      return `<div class="mesa-card ${ocupada ? 'ocupada' : 'libre'}" onclick="nuevoPedido(${m.idMesa}, '${m.numMesa || m.nunMesa}', '${m.numPiso}')">
+        <div class="mesa-num">${m.numMesa || m.nunMesa || m.idMesa}</div>
+        <div class="mesa-piso">Piso ${m.numPiso || '—'}</div>
+        <div class="mesa-est" style="color:${ocupada ? 'var(--warning)' : 'var(--success)'}">
+          ${ocupada ? '🟡 Ocupada' : '🟢 Libre'}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderPedidos() {
+    const tbody = document.getElementById('tablaPedidos');
+    document.getElementById('totalPedidos').textContent = `${pedidos.length} pedidos`;
+    if (!pedidos.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Sin pedidos hoy</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = pedidos.map(p => {
+      const mesa = mesas.find(m => m.idMesa === p.idMesa);
+      return `<tr>
+        <td class="td-muted">#${p.idPedido}</td>
+        <td>Mesa ${mesa ? (mesa.numMesa || mesa.nunMesa) : p.idMesa}</td>
+        <td class="td-muted">Piso ${mesa ? (mesa.numPiso || '—') : '—'}</td>
+        <td class="td-muted">${p.fecha || '—'}</td>
+        <td><span class="badge ${p.estado === 'A' ? 'badge-yellow' : p.estado === 'C' ? 'badge-green' : 'badge-red'}">
+          ${p.estado === 'A' ? 'En curso' : p.estado === 'C' ? 'Cerrado' : 'Inactivo'}
+        </span></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="cerrarPedido(${p.idPedido})">✅ Cerrar</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function abrirModalMesa()  { document.getElementById('modalMesa').classList.add('open'); }
+  function cerrarModalMesa() { document.getElementById('modalMesa').classList.remove('open'); }
+
+  async function guardarMesa() {
+    const num  = document.getElementById('mNumMesa').value.trim().padStart(2,'0');
+    const piso = document.getElementById('mNumPiso').value.trim().padStart(2,'0');
+    if (!num || !piso) { toast('Número y piso son obligatorios', 'error'); return; }
+    try {
+      await api('/api/mesas', 'POST', { nunMesa: num, numPiso: piso, estado: 'A' });
+      toast('Mesa creada'); cerrarModalMesa(); init();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  }
+
+  function nuevoPedido(idMesa, numMesa, numPiso) {
+    document.getElementById('pIdMesa').value = idMesa;
+    document.getElementById('pMesaLabel').textContent = `Mesa ${numMesa} — Piso ${numPiso}`;
+    document.getElementById('pEstado').value = 'A';
+    document.getElementById('modalPedido').classList.add('open');
+  }
+  function cerrarModalPedido() { document.getElementById('modalPedido').classList.remove('open'); }
+
+  async function guardarPedido() {
+    const idMesa = document.getElementById('pIdMesa').value;
+    try {
+      await api('/api/pedidos', 'POST', { idMesa: parseInt(idMesa), fecha: new Date().toISOString().slice(0,10), estado: document.getElementById('pEstado').value });
+      toast('Pedido creado'); cerrarModalPedido(); init();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  }
+
+  async function cerrarPedido(id) {
+    if (!confirm('¿Cerrar este pedido?')) return;
+    try { await api(`/api/pedidos/${id}`, 'PUT', { estado: 'C' }); toast('Pedido cerrado'); init(); }
+    catch(e) { toast('Error: ' + e.message, 'error'); }
+  }
+
+  [document.getElementById('modalMesa'), document.getElementById('modalPedido')].forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  });
+
+  init();
+</script>
+</body>
+</html>

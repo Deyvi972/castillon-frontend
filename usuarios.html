@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios — Castillon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🍽️</div>
+      <div><div class="brand-name">Castillon</div><div class="brand-sub">Sistema v2</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestión</div>
+      <a href="clientes.html"  class="nav-link"><span class="nav-icon">👥</span> Clientes</a>
+      <a href="empleados.html" class="nav-link"><span class="nav-icon">👤</span> Empleados</a>
+      <a href="productos.html" class="nav-link"><span class="nav-icon">📦</span> Productos</a>
+      <a href="pedidos.html"   class="nav-link"><span class="nav-icon">🍽️</span> Pedidos / Mesas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Ventas</div>
+      <a href="ventas.html"   class="nav-link"><span class="nav-icon">💰</span> Ventas</a>
+      <a href="deudas.html"   class="nav-link"><span class="nav-icon">📋</span> Deudas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a href="usuarios.html" class="nav-link"><span class="nav-icon">🔐</span> Usuarios</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="avatarLetter">U</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Cerrar sesión">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Usuarios del Sistema</span>
+      <div class="topbar-right">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="buscar" placeholder="Buscar usuario…" oninput="filtrar()">
+        </div>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo usuario</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🔐 Usuarios registrados</span>
+          <span id="totalCount" class="badge badge-blue" style="margin-left:auto">Cargando…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Usuario (login)</th>
+                <th>Empleado</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaUsuarios">
+              <tr class="loading-row"><td colspan="6"><span class="spinner"></span> Cargando usuarios…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Nuevo Usuario</span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fId">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Login (usuario) *</label>
+          <input type="text" id="fLogeo" placeholder="nombre.usuario">
+        </div>
+        <div class="form-group">
+          <label>Clave * (máx. 5 chars)</label>
+          <input type="text" id="fClave" maxlength="5" placeholder="clave1">
+        </div>
+        <div class="form-group">
+          <label>Tipo de usuario *</label>
+          <select id="fTipo"><option value="">— seleccionar —</option></select>
+        </div>
+        <div class="form-group full">
+          <label>Empleado vinculado *</label>
+          <select id="fEmpleado"><option value="">— seleccionar —</option></select>
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="fEstado"><option value="A">Activo</option><option value="I">Inactivo</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardar" onclick="guardar()">Guardar usuario</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const session = requireAuth();
+  if (session) {
+    document.getElementById('userName').textContent = session.nombres || session.logeo;
+    document.getElementById('userRole').textContent = session.tipoUsuario || 'Usuario';
+    document.getElementById('avatarLetter').textContent = (session.nombres || session.logeo || 'U')[0].toUpperCase();
+  }
+  setActiveNav();
+
+  let todosUsuarios = [];
+  let empleados = [];
+  let tipos = [];
+
+  async function init() {
+    try { tipos = await api('/api/tipo-usuarios'); tipos.forEach(t => { document.getElementById('fTipo').innerHTML += `<option value="${t.idTipoUsuario}">${t.nomUsuario}</option>`; }); } catch {}
+    try {
+      empleados = await api('/api/empleados');
+      empleados.forEach(e => {
+        const n = [e.nombres, e.apePaterno].filter(Boolean).join(' ');
+        document.getElementById('fEmpleado').innerHTML += `<option value="${e.idEmpleado}">${n || 'ID ' + e.idEmpleado}</option>`;
+      });
+    } catch {}
+
+    try {
+      const data = await api('/api/usuarios');
+      todosUsuarios = data;
+      document.getElementById('totalCount').textContent = `${data.length} usuarios`;
+      renderTabla(data);
+    } catch {
+      document.getElementById('tablaUsuarios').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">⚠️ No se pudo conectar al servidor</td></tr>`;
+    }
+  }
+
+  function getNomEmpleado(id) {
+    const e = empleados.find(x => x.idEmpleado === id);
+    if (!e) return '—';
+    return [e.nombres, e.apePaterno].filter(Boolean).join(' ');
+  }
+  function getNomTipo(id) { const t = tipos.find(x => x.idTipoUsuario === id); return t ? t.nomUsuario : '—'; }
+
+  function renderTabla(lista) {
+    const tbody = document.getElementById('tablaUsuarios');
+    if (!lista.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🔐</div><div class="empty-title">Sin usuarios</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map(u => `<tr>
+      <td class="td-muted">#${u.idUsuario}</td>
+      <td><strong>${u.logeo || '—'}</strong></td>
+      <td class="td-muted">${u.empleadoNombre || getNomEmpleado(u.idEmpleado)}</td>
+      <td class="td-muted">${u.tipoUsuario || getNomTipo(u.idTipoUsuario)}</td>
+      <td><span class="badge ${u.estado === 'A' ? 'badge-green' : 'badge-red'}">${u.estado === 'A' ? 'Activo' : 'Inactivo'}</span></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="editar(${u.idUsuario})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="eliminar(${u.idUsuario})">🗑️</button>
+      </td>
+    </tr>`).join('');
+  }
+
+  function filtrar() {
+    const q = document.getElementById('buscar').value.toLowerCase();
+    renderTabla(todosUsuarios.filter(u => (u.logeo || '').toLowerCase().includes(q)));
+  }
+
+  function abrirModal(u = null) {
+    ['fId','fLogeo','fClave'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fTipo').value = '';
+    document.getElementById('fEmpleado').value = '';
+    document.getElementById('fEstado').value = 'A';
+    if (u) {
+      document.getElementById('modalTitle').textContent = 'Editar Usuario';
+      document.getElementById('fId').value = u.idUsuario;
+      document.getElementById('fLogeo').value = u.logeo || '';
+      document.getElementById('fClave').value = u.clave || '';
+      document.getElementById('fTipo').value = u.idTipoUsuario || '';
+      document.getElementById('fEmpleado').value = u.idEmpleado || '';
+      document.getElementById('fEstado').value = u.estado || 'A';
+    } else { document.getElementById('modalTitle').textContent = 'Nuevo Usuario'; }
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function cerrarModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+  function editar(id) { const u = todosUsuarios.find(x => x.idUsuario === id); if(u) abrirModal(u); }
+
+  async function guardar() {
+    const logeo = document.getElementById('fLogeo').value.trim();
+    const clave = document.getElementById('fClave').value.trim();
+    const idTipo = document.getElementById('fTipo').value;
+    const idEmpleado = document.getElementById('fEmpleado').value;
+    if (!logeo || !clave || !idTipo || !idEmpleado) { toast('Todos los campos obligatorios', 'error'); return; }
+
+    const body = { logeo, clave, idTipoUsuario: parseInt(idTipo), idEmpleado: parseInt(idEmpleado), estado: document.getElementById('fEstado').value };
+    const id = document.getElementById('fId').value;
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      if (id) { await api(`/api/usuarios/${id}`, 'PUT', body); toast('Usuario actualizado'); }
+      else     { await api('/api/usuarios', 'POST', body); toast('Usuario creado'); }
+      cerrarModal(); init();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Guardar usuario'; }
+  }
+
+  async function eliminar(id) {
+    if (!confirm('¿Eliminar este usuario?')) return;
+    try { await api(`/api/usuarios/${id}`, 'DELETE'); toast('Usuario eliminado'); init(); }
+    catch(e) { toast('Error: ' + e.message, 'error'); }
+  }
+
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) cerrarModal();
+  });
+
+  init();
+</script>
+</body>
+</html>

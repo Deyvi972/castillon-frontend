@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos — Castillon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🍽️</div>
+      <div><div class="brand-name">Castillon</div><div class="brand-sub">Sistema v2</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestión</div>
+      <a href="clientes.html"  class="nav-link"><span class="nav-icon">👥</span> Clientes</a>
+      <a href="empleados.html" class="nav-link"><span class="nav-icon">👤</span> Empleados</a>
+      <a href="productos.html" class="nav-link"><span class="nav-icon">📦</span> Productos</a>
+      <a href="pedidos.html"   class="nav-link"><span class="nav-icon">🍽️</span> Pedidos / Mesas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Ventas</div>
+      <a href="ventas.html"   class="nav-link"><span class="nav-icon">💰</span> Ventas</a>
+      <a href="deudas.html"   class="nav-link"><span class="nav-icon">📋</span> Deudas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a href="usuarios.html" class="nav-link"><span class="nav-icon">🔐</span> Usuarios</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="avatarLetter">U</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Cerrar sesión">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Productos</span>
+      <div class="topbar-right">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="buscar" placeholder="Buscar producto…" oninput="filtrar()">
+        </div>
+        <select id="filtroCategoria" onchange="filtrar()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 12px;color:var(--text);font-size:13px;font-family:Inter,sans-serif;outline:none">
+          <option value="">Todas las categorías</option>
+        </select>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo producto</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📦 Catálogo de Productos</span>
+          <span id="totalCount" class="badge badge-blue" style="margin-left:auto">Cargando…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Marca</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaProductos">
+              <tr class="loading-row"><td colspan="8"><span class="spinner"></span> Cargando productos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Nuevo Producto</span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fId">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Nombre del producto *</label>
+          <input type="text" id="fNombre" placeholder="Ej: Pollo a la brasa 1/4">
+        </div>
+        <div class="form-group full">
+          <label>Descripción</label>
+          <input type="text" id="fDescripcion" placeholder="Descripción breve…">
+        </div>
+        <div class="form-group">
+          <label>Categoría *</label>
+          <select id="fCategoria"><option value="">— seleccionar —</option></select>
+        </div>
+        <div class="form-group">
+          <label>Marca</label>
+          <input type="text" id="fMarca" placeholder="Marca">
+        </div>
+        <div class="form-group">
+          <label>Precio (S/) *</label>
+          <input type="number" id="fPrecio" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="fEstado">
+            <option value="A">Activo</option>
+            <option value="I">Inactivo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardar" onclick="guardar()">Guardar producto</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const session = requireAuth();
+  if (session) {
+    document.getElementById('userName').textContent = session.nombres || session.logeo;
+    document.getElementById('userRole').textContent = session.tipoUsuario || 'Usuario';
+    document.getElementById('avatarLetter').textContent = (session.nombres || session.logeo || 'U')[0].toUpperCase();
+  }
+  setActiveNav();
+
+  let todosProductos = [];
+  let categorias = [];
+
+  async function init() {
+    try {
+      categorias = await api('/api/categorias');
+      const sel = document.getElementById('filtroCategoria');
+      const selModal = document.getElementById('fCategoria');
+      categorias.forEach(c => {
+        sel.innerHTML += `<option value="${c.idCategoria}">${c.nomCategoria}</option>`;
+        selModal.innerHTML += `<option value="${c.idCategoria}">${c.nomCategoria}</option>`;
+      });
+    } catch {}
+
+    try {
+      const data = await api('/api/productos');
+      todosProductos = data;
+      document.getElementById('totalCount').textContent = `${data.length} productos`;
+      renderTabla(data);
+    } catch(e) {
+      document.getElementById('tablaProductos').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">⚠️ No se pudo conectar al servidor</td></tr>`;
+    }
+  }
+
+  function getNomCategoria(id) {
+    const c = categorias.find(x => x.idCategoria === id);
+    return c ? c.nomCategoria : '—';
+  }
+
+  function renderTabla(lista) {
+    const tbody = document.getElementById('tablaProductos');
+    if (lista.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <div class="empty-title">Sin productos</div>
+        <div class="empty-desc">Agrega tu primer producto</div>
+      </div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map(p => `<tr>
+      <td class="td-muted">#${p.idProducto}</td>
+      <td><strong>${p.nomProducto || '—'}</strong></td>
+      <td class="td-muted">${p.categoriaNombre || getNomCategoria(p.idCategoria)}</td>
+      <td class="td-muted">${p.marca || '—'}</td>
+      <td class="td-muted">${p.descripcion || '—'}</td>
+      <td><strong>S/ ${(p.precio || 0).toFixed(2)}</strong></td>
+      <td><span class="badge ${p.estado === 'A' ? 'badge-green' : 'badge-red'}">${p.estado === 'A' ? 'Activo' : 'Inactivo'}</span></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="editar(${p.idProducto})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="eliminar(${p.idProducto})">🗑️</button>
+      </td>
+    </tr>`).join('');
+  }
+
+  function filtrar() {
+    const q = document.getElementById('buscar').value.toLowerCase();
+    const cat = document.getElementById('filtroCategoria').value;
+    const filtrado = todosProductos.filter(p => {
+      const matchQ = !q || (p.nomProducto || '').toLowerCase().includes(q) || (p.marca || '').toLowerCase().includes(q);
+      const matchCat = !cat || String(p.idCategoria) === cat;
+      return matchQ && matchCat;
+    });
+    renderTabla(filtrado);
+  }
+
+  function abrirModal(prod = null) {
+    document.getElementById('fId').value = '';
+    document.getElementById('fNombre').value = '';
+    document.getElementById('fDescripcion').value = '';
+    document.getElementById('fCategoria').value = '';
+    document.getElementById('fMarca').value = '';
+    document.getElementById('fPrecio').value = '';
+    document.getElementById('fEstado').value = 'A';
+    if (prod) {
+      document.getElementById('modalTitle').textContent = 'Editar Producto';
+      document.getElementById('fId').value = prod.idProducto;
+      document.getElementById('fNombre').value = prod.nomProducto || '';
+      document.getElementById('fDescripcion').value = prod.descripcion || '';
+      document.getElementById('fCategoria').value = prod.idCategoria || '';
+      document.getElementById('fMarca').value = prod.marca || '';
+      document.getElementById('fPrecio').value = prod.precio || '';
+      document.getElementById('fEstado').value = prod.estado || 'A';
+    } else {
+      document.getElementById('modalTitle').textContent = 'Nuevo Producto';
+    }
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function cerrarModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+  function editar(id) { const p = todosProductos.find(x => x.idProducto === id); if(p) abrirModal(p); }
+
+  async function guardar() {
+    const nombre = document.getElementById('fNombre').value.trim();
+    const precio = parseFloat(document.getElementById('fPrecio').value);
+    const idCategoria = document.getElementById('fCategoria').value;
+    if (!nombre || isNaN(precio) || !idCategoria) { toast('Nombre, categoría y precio son obligatorios', 'error'); return; }
+
+    const body = {
+      nomProducto: nombre,
+      descripcion: document.getElementById('fDescripcion').value.trim(),
+      idCategoria: parseInt(idCategoria),
+      marca: document.getElementById('fMarca').value.trim(),
+      precio,
+      estado: document.getElementById('fEstado').value
+    };
+
+    const id = document.getElementById('fId').value;
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+
+    try {
+      if (id) { await api(`/api/productos/${id}`, 'PUT', body); toast('Producto actualizado'); }
+      else    { await api('/api/productos', 'POST', body); toast('Producto creado'); }
+      cerrarModal(); init();
+    } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Guardar producto'; }
+  }
+
+  async function eliminar(id) {
+    if (!confirm('¿Eliminar este producto?')) return;
+    try { await api(`/api/productos/${id}`, 'DELETE'); toast('Producto eliminado'); init(); }
+    catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
+  }
+
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) cerrarModal();
+  });
+
+  init();
+</script>
+</body>
+</html>

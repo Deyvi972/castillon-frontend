@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ventas — Castillon</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .venta-totales {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .total-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+    .total-row.grand { color: var(--text); font-weight: 700; font-size: 15px; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; }
+    .total-row.grand { grid-column: 1 / -1; }
+    .item-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .item-row:last-child { border-bottom: none; }
+    .item-qty { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; width: 60px; text-align: center; font-size: 13px; color: var(--text); font-family: Inter,sans-serif; }
+    .item-name { flex: 1; font-size: 13px; }
+    .item-price { font-size: 13px; color: var(--muted); min-width: 70px; text-align: right; }
+    .item-sub   { font-size: 13px; font-weight: 600; min-width: 80px; text-align: right; }
+    .item-del   { background: none; border: none; cursor: pointer; color: var(--danger); font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🍽️</div>
+      <div><div class="brand-name">Castillon</div><div class="brand-sub">Sistema v2</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestión</div>
+      <a href="clientes.html"  class="nav-link"><span class="nav-icon">👥</span> Clientes</a>
+      <a href="empleados.html" class="nav-link"><span class="nav-icon">👤</span> Empleados</a>
+      <a href="productos.html" class="nav-link"><span class="nav-icon">📦</span> Productos</a>
+      <a href="pedidos.html"   class="nav-link"><span class="nav-icon">🍽️</span> Pedidos / Mesas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Ventas</div>
+      <a href="ventas.html"   class="nav-link"><span class="nav-icon">💰</span> Ventas</a>
+      <a href="deudas.html"   class="nav-link"><span class="nav-icon">📋</span> Deudas</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a href="usuarios.html" class="nav-link"><span class="nav-icon">🔐</span> Usuarios</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="avatarLetter">U</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Cerrar sesión">⎋</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Ventas</span>
+      <div class="topbar-right">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="buscar" placeholder="Buscar…" oninput="filtrar()">
+        </div>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Nueva venta</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">💰 Historial de Ventas</span>
+          <span id="totalCount" class="badge badge-blue" style="margin-left:auto">Cargando…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Método de pago</th>
+                <th>Documento</th>
+                <th>Subtotal</th>
+                <th>IGV</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaVentas">
+              <tr class="loading-row"><td colspan="10"><span class="spinner"></span> Cargando ventas…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA VENTA -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <span class="modal-title">Nueva Venta</span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cliente *</label>
+          <select id="fCliente"><option value="">— seleccionar —</option></select>
+        </div>
+        <div class="form-group">
+          <label>Método de pago *</label>
+          <select id="fMetodoPago"><option value="">— seleccionar —</option></select>
+        </div>
+        <div class="form-group">
+          <label>Tipo documento</label>
+          <select id="fDocumento">
+            <option value="B">Boleta</option>
+            <option value="F">Factura</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Descuento (S/)</label>
+          <input type="number" id="fDescuento" min="0" step="0.01" value="0" oninput="calcTotales()">
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <strong style="font-size:13px">Productos</strong>
+          <div class="search-box" style="flex:1">
+            <span>🔍</span>
+            <input type="text" id="buscarProducto" placeholder="Buscar producto para agregar…" oninput="buscarProd()">
+          </div>
+        </div>
+        <div id="resultadosProd" style="max-height:120px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:none"></div>
+        <div id="itemsVenta" style="margin-top:10px;max-height:160px;overflow-y:auto"></div>
+      </div>
+
+      <div class="venta-totales">
+        <div class="total-row"><span>Monto bruto</span><span id="tMonto">S/ 0.00</span></div>
+        <div class="total-row"><span>Descuento</span><span id="tDescuento">S/ 0.00</span></div>
+        <div class="total-row"><span>Subtotal</span><span id="tSub">S/ 0.00</span></div>
+        <div class="total-row"><span>IGV (18%)</span><span id="tIgv">S/ 0.00</span></div>
+        <div class="total-row grand"><span>TOTAL A PAGAR</span><span id="tTotal">S/ 0.00</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardar" onclick="guardar()">Registrar venta</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const session = requireAuth();
+  if (session) {
+    document.getElementById('userName').textContent = session.nombres || session.logeo;
+    document.getElementById('userRole').textContent = session.tipoUsuario || 'Usuario';
+    document.getElementById('avatarLetter').textContent = (session.nombres || session.logeo || 'U')[0].toUpperCase();
+  }
+  setActiveNav();
+
+  let todasVentas = [];
+  let clientes = [];
+  let metodos = [];
+  let productos = [];
+  let itemsCarrito = [];
+
+  async function init() {
+    try { clientes = await api('/api/clientes'); clientes.forEach(c => { const n = [c.nombres, c.apePaterno].filter(Boolean).join(' '); document.getElementById('fCliente').innerHTML += `<option value="${c.idCliente}">${n || 'ID ' + c.idCliente}</option>`; }); } catch {}
+    try { metodos = await api('/api/metodos-pago'); metodos.forEach(m => { document.getElementById('fMetodoPago').innerHTML += `<option value="${m.idMetodoPago}">${m.nomMetodo}</option>`; }); } catch {}
+    try { productos = await api('/api/productos'); } catch {}
+
+    try {
+      const data = await api('/api/ventas');
+      todasVentas = data;
+      document.getElementById('totalCount').textContent = `${data.length} ventas`;
+      renderTabla(data);
+    } catch {
+      document.getElementById('tablaVentas').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">⚠️ No se pudo conectar al servidor</td></tr>`;
+    }
+  }
+
+  function renderTabla(lista) {
+    const tbody = document.getElementById('tablaVentas');
+    if (!lista.length) {
+      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">Sin ventas registradas</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map(v => `<tr>
+      <td class="td-muted">#${v.idVentas}</td>
+      <td class="td-muted">${v.fechaVenta || '—'}</td>
+      <td>${v.clienteNombre || '—'}</td>
+      <td class="td-muted">${v.metodoPago || '—'}</td>
+      <td><span class="badge badge-blue">${v.documento === 'B' ? 'Boleta' : v.documento === 'F' ? 'Factura' : '—'}</span></td>
+      <td class="td-muted">S/ ${(v.subTototal || 0).toFixed(2)}</td>
+      <td class="td-muted">S/ ${(v.igv || 0).toFixed(2)}</td>
+      <td><strong>S/ ${(v.totalPagar || 0).toFixed(2)}</strong></td>
+      <td><span class="badge ${v.estado === 'A' ? 'badge-green' : 'badge-red'}">${v.estado === 'A' ? 'Activa' : 'Anulada'}</span></td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="anular(${v.idVentas})">🚫 Anular</button>
+      </td>
+    </tr>`).join('');
+  }
+
+  function filtrar() {
+    const q = document.getElementById('buscar').value.toLowerCase();
+    renderTabla(todasVentas.filter(v => String(v.idVentas).includes(q) || (v.clienteNombre || '').toLowerCase().includes(q) || (v.fechaVenta || '').includes(q)));
+  }
+
+  // Carrito
+  function buscarProd() {
+    const q = document.getElementById('buscarProducto').value.toLowerCase();
+    const res = document.getElementById('resultadosProd');
+    if (!q) { res.style.display = 'none'; return; }
+    const match = productos.filter(p => (p.nomProducto || '').toLowerCase().includes(q) && p.estado === 'A').slice(0, 8);
+    if (!match.length) { res.style.display = 'none'; return; }
+    res.style.display = 'block';
+    res.innerHTML = match.map(p => `
+      <div onclick="agregarItem(${p.idProducto})" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;transition:background 0.1s" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background=''">
+        <strong>${p.nomProducto}</strong> <span style="color:var(--muted);margin-left:8px">S/ ${(p.precio || 0).toFixed(2)}</span>
+      </div>`).join('');
+  }
+
+  function agregarItem(idProducto) {
+    const p = productos.find(x => x.idProducto === idProducto);
+    if (!p) return;
+    const existe = itemsCarrito.find(x => x.idProducto === idProducto);
+    if (existe) { existe.cantidad++; }
+    else { itemsCarrito.push({ idProducto, nombre: p.nomProducto, precio: p.precio, cantidad: 1 }); }
+    document.getElementById('buscarProducto').value = '';
+    document.getElementById('resultadosProd').style.display = 'none';
+    renderCarrito();
+  }
+
+  function quitarItem(idx) { itemsCarrito.splice(idx, 1); renderCarrito(); }
+
+  function renderCarrito() {
+    const cont = document.getElementById('itemsVenta');
+    if (!itemsCarrito.length) {
+      cont.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Busca productos arriba para agregarlos</div>`;
+      calcTotales(); return;
+    }
+    cont.innerHTML = itemsCarrito.map((item, i) => `
+      <div class="item-row">
+        <input type="number" class="item-qty" value="${item.cantidad}" min="1" onchange="cambiarQty(${i}, this.value)">
+        <span class="item-name">${item.nombre}</span>
+        <span class="item-price">S/ ${item.precio.toFixed(2)}</span>
+        <span class="item-sub">S/ ${(item.precio * item.cantidad).toFixed(2)}</span>
+        <button class="item-del" onclick="quitarItem(${i})">✕</button>
+      </div>`).join('');
+    calcTotales();
+  }
+
+  function cambiarQty(idx, val) { itemsCarrito[idx].cantidad = Math.max(1, parseInt(val) || 1); renderCarrito(); }
+
+  function calcTotales() {
+    const monto = itemsCarrito.reduce((s, x) => s + x.precio * x.cantidad, 0);
+    const desc   = parseFloat(document.getElementById('fDescuento').value) || 0;
+    const sub    = Math.max(0, monto - desc);
+    const igv    = sub * 0.18;
+    const total  = sub + igv;
+    document.getElementById('tMonto').textContent    = `S/ ${monto.toFixed(2)}`;
+    document.getElementById('tDescuento').textContent = `S/ ${desc.toFixed(2)}`;
+    document.getElementById('tSub').textContent      = `S/ ${sub.toFixed(2)}`;
+    document.getElementById('tIgv').textContent      = `S/ ${igv.toFixed(2)}`;
+    document.getElementById('tTotal').textContent    = `S/ ${total.toFixed(2)}`;
+  }
+
+  function abrirModal() {
+    itemsCarrito = [];
+    renderCarrito();
+    document.getElementById('fCliente').value = '';
+    document.getElementById('fMetodoPago').value = '';
+    document.getElementById('fDocumento').value = 'B';
+    document.getElementById('fDescuento').value = '0';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function cerrarModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+  async function guardar() {
+    const idCliente = document.getElementById('fCliente').value;
+    const idMetodo  = document.getElementById('fMetodoPago').value;
+    if (!idCliente || !idMetodo)     { toast('Selecciona cliente y método de pago', 'error'); return; }
+    if (!itemsCarrito.length)        { toast('Agrega al menos un producto', 'error'); return; }
+
+    const desc  = parseFloat(document.getElementById('fDescuento').value) || 0;
+    const monto = itemsCarrito.reduce((s, x) => s + x.precio * x.cantidad, 0);
+    const sub   = Math.max(0, monto - desc);
+    const igv   = sub * 0.18;
+    const total = sub + igv;
+
+    const body = {
+      idCliente: parseInt(idCliente),
+      idMetodoPago: parseInt(idMetodo),
+      idUsuario: session?.idUsuario || 1,
+      documento: document.getElementById('fDocumento').value,
+      fechaVenta: new Date().toISOString().slice(0,10),
+      montoTotal: parseFloat(monto.toFixed(2)),
+      descuento:  parseFloat(desc.toFixed(2)),
+      subTototal: parseFloat(sub.toFixed(2)),
+      igv:        parseFloat(igv.toFixed(2)),
+      totalPagar: parseFloat(total.toFixed(2)),
+      estado: 'A',
+      detalles: itemsCarrito.map(x => ({
+        idProducto: x.idProducto,
+        cantidad: x.cantidad,
+        precio: x.precio
+      }))
+    };
+
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.textContent = 'Registrando…';
+    try {
+      await api('/api/ventas', 'POST', body);
+      toast('Venta registrada correctamente');
+      cerrarModal(); init();
+    } catch(e) { toast('Error al registrar venta: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Registrar venta'; }
+  }
+
+  async function anular(id) {
+    if (!confirm('¿Anular esta venta? Esta acción no se puede deshacer.')) return;
+    try { await api(`/api/ventas/${id}/anular`, 'PUT'); toast('Venta anulada'); init(); }
+    catch(e) { toast('Error al anular: ' + e.message, 'error'); }
+  }
+
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) cerrarModal();
+  });
+
+  init();
+</script>
+</body>
+</html>
